@@ -6,8 +6,8 @@ export default function CertificateDesigner() {
     const [items, setItems] = useState(
         Array.from({ length: 5 }, (_, i) => ({
             id: i,
-            x: 50 + Math.random() * 800,
-            y: 50 + Math.random() * 200,
+            x: 50 + i * 100,
+            y: 50 + i * 50,
             width: 160,
             height: 40,
             text: `Item ${i}`,
