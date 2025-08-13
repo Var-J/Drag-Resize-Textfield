@@ -10,7 +10,7 @@ export default function CertificateDesigner() {
             y: 50 + Math.random() * 200,
             width: 160,
             height: 40,
-            text: `Item ${i}`,
+            text: `Item ${i}`, // added text field
         }))
     );
 
@@ -72,9 +72,7 @@ function DraggableResizableItem({
     const isDragging = useRef(false);
     const isResizing = useRef(false);
     const resizeCorner = useRef<"top-left" | "top-right" | "bottom-left" | "bottom-right" | null>(null);
-
-    const dragStart = useRef({ mouseX: 0, mouseY: 0, startX: 0, startY: 0 });
-    const resizeStart = useRef({ mouseX: 0, mouseY: 0, startX: 0, startY: 0, startW: 0, startH: 0 });
+    const offset = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -82,75 +80,65 @@ function DraggableResizableItem({
             const containerRect = containerRef.current.getBoundingClientRect();
 
             if (isDragging.current) {
-                const dx = e.clientX - dragStart.current.mouseX;
-                const dy = e.clientY - dragStart.current.mouseY;
-                let newX = dragStart.current.startX + dx;
-                let newY = dragStart.current.startY + dy;
+                let newX = e.clientX - containerRect.left - offset.current.x;
+                let newY = e.clientY - containerRect.top - offset.current.y;
 
-                if (newX < 0) newX = 0;
-                if (newY < 0) newY = 0;
-                if (newX + width > containerRect.width) newX = containerRect.width - width;
-                if (newY + height > containerRect.height) newY = containerRect.height - height;
+                if (newX < 0) {
+                    newX = 0;
+                }
 
-                onUpdate(id, {x: newX, y: newY});
+                if (newY < 0) {
+                    newY = 0;
+                }
+
+                if (newX + width > containerRect.width) {
+                    newX = containerRect.width - width;
+                }
+
+                if (newY + height > containerRect.height) {
+                    newY = containerRect.height - height;
+                }
+
+                onUpdate(id, { x: newX, y: newY });
             }
 
             if (isResizing.current && resizeCorner.current) {
-                if (!containerRef.current) return;
+                let newWidth = width;
+                let newHeight = height;
+                let newX = x;
+                let newY = y;
 
-                const containerRect = containerRef.current.getBoundingClientRect();
-                const dx = e.clientX - resizeStart.current.mouseX;
-                const dy = e.clientY - resizeStart.current.mouseY;
-
-                let newWidth = resizeStart.current.startW;
-                let newHeight = resizeStart.current.startH;
-                let newX = resizeStart.current.startX;
-                let newY = resizeStart.current.startY;
+                const mouseX = e.clientX - containerRect.left;
+                const mouseY = e.clientY - containerRect.top;
 
                 switch (resizeCorner.current) {
                     case "top-left":
-                        newWidth -= dx;
-                        newHeight -= dy;
-                        newX += dx;
-                        newY += dy;
+                        newWidth = width + (x - mouseX);
+                        newHeight = height + (y - mouseY);
+                        newX = mouseX;
+                        newY = mouseY;
                         break;
                     case "top-right":
-                        newWidth += dx;
-                        newHeight -= dy;
-                        newY += dy;
+                        newWidth = mouseX - x;
+                        newHeight = height + (y - mouseY);
+                        newY = mouseY;
                         break;
                     case "bottom-left":
-                        newWidth -= dx;
-                        newHeight += dy;
-                        newX += dx;
+                        newWidth = width + (x - mouseX);
+                        newHeight = mouseY - y;
+                        newX = mouseX;
                         break;
                     case "bottom-right":
-                        newWidth += dx;
-                        newHeight += dy;
+                        newWidth = mouseX - x;
+                        newHeight = mouseY - y;
                         break;
-                }
-
-                // Clamp width and height so they don't exceed container bounds
-                const maxWidth = containerRect.width - newX;
-                const maxHeight = containerRect.height - newY;
-                newWidth = Math.min(Math.max(newWidth, 20), maxWidth);
-                newHeight = Math.min(Math.max(newHeight, 20), maxHeight);
-
-                // Clamp X/Y so they stay inside container
-                if (newX < 0) {
-                    newWidth += newX; // shrink width if moving left out of bounds
-                    newX = 0;
-                }
-                if (newY < 0) {
-                    newHeight += newY; // shrink height if moving up out of bounds
-                    newY = 0;
                 }
 
                 onUpdate(id, {
                     x: newX,
                     y: newY,
-                    width: newWidth,
-                    height: newHeight,
+                    width: Math.max(newWidth, 20),
+                    height: Math.max(newHeight, 20),
                 });
             }
         };
@@ -168,21 +156,25 @@ function DraggableResizableItem({
             window.removeEventListener("mousemove", handleMouseMove);
             window.removeEventListener("mouseup", handleMouseUp);
         };
-    }, [id, onUpdate, containerRef, width, height]);
+    }, [id, onUpdate, x, y, width, height, containerRef]);
 
     const handleMouseDownDrag = (e: React.MouseEvent) => {
-        if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) {
+        // Don't start dragging if the click is on an input/textarea
+        if (
+            e.target instanceof HTMLTextAreaElement ||
+            e.target instanceof HTMLInputElement
+        ) {
             return;
         }
-        if (!containerRef.current) return;
 
-        isDragging.current = true;
-        dragStart.current = {
-            mouseX: e.clientX,
-            mouseY: e.clientY,
-            startX: x,
-            startY: y,
+        const rect = itemRef.current?.getBoundingClientRect();
+        if (!rect || !containerRef.current) return;
+
+        offset.current = {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
         };
+        isDragging.current = true;
         e.preventDefault();
     };
 
@@ -192,14 +184,6 @@ function DraggableResizableItem({
     ) => {
         isResizing.current = true;
         resizeCorner.current = corner;
-        resizeStart.current = {
-            mouseX: e.clientX,
-            mouseY: e.clientY,
-            startX: x,
-            startY: y,
-            startW: width,
-            startH: height,
-        };
         e.stopPropagation();
         e.preventDefault();
     };
@@ -207,28 +191,14 @@ function DraggableResizableItem({
     return (
         <div
             ref={itemRef}
-            className="border absolute flex justify-center items-center select-none cursor-move"
-            style={{
-                left: x,
-                top: y,
-                width,
-                height,
-                paddingLeft: 0.1 * width, // 10% padding
-                paddingRight: 0.1 * width, // 10% padding
-                paddingTop: 0.1 * height, // 10% padding
-                paddingBottom: 0.1 * height, // 10% padding
-            }}
+            className="border absolute flex justify-center items-center select-none p-2 cursor-move overflow-hidden"
+            style={{ left: x, top: y, width, height }}
             onMouseDown={handleMouseDownDrag}
         >
             <AutoResizeTextarea
-                value={text}
+                defaultValue={text}
                 onChange={(e) => onUpdate(id, { text: e.target.value })}
-                onMinHeightChange={(minH) => {
-                    if (minH > height) {
-                        onUpdate(id, { height: minH });
-                    }
-                }}
-                className="w-full resize-none text-center break-words whitespace-pre-wrap outline-none bg-transparent"
+                className="w-full h-full resize-none text-center break-words whitespace-pre-wrap outline-none bg-transparent"
             />
 
             {/* Resize handles */}
@@ -259,23 +229,16 @@ function DraggableResizableItem({
 function AutoResizeTextarea({
                                 value,
                                 onChange,
-                                onMinHeightChange,
-                                isResizing,
                                 ...props
-                            }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
-    onMinHeightChange?: (height: number) => void;
-    isResizing?: boolean;
-}) {
+                            }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
     const ref = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
-        if (ref.current && !isResizing) {
-            ref.current.style.height = "auto";
-            const newHeight = ref.current.scrollHeight;
-            ref.current.style.height = newHeight * 0.9 + "px"; // -8 for padding
-            onMinHeightChange?.(newHeight);
+        if (ref.current) {
+            ref.current.style.height = "auto"; // Reset height to measure again
+            ref.current.style.height = ref.current.scrollHeight + "px";
         }
-    }, [value, onMinHeightChange, isResizing]);
+    }, [value]);
 
     return (
         <textarea
