@@ -205,53 +205,52 @@ function DraggableResizableItem({
     };
 
     return (
-        <div
-            ref={itemRef}
-            className="border absolute flex justify-center items-center select-none cursor-move"
-            style={{
-                left: x,
-                top: y,
+        <div ref={itemRef}
+             onMouseDown={handleMouseDownDrag}
+             style={{
+                 left: x,
+                 top: y,
+             }}
+             className="group absolute hover:hover:shadow-[0_0_8px_5px_rgba(147,197,253,0.8)] hover:bg-blue-400 hover:shadow-blue-300 select-none cursor-move p-1">
+            <div
+                style={{
                 width,
                 height,
-                paddingLeft: 0.1 * width, // 10% padding
-                paddingRight: 0.1 * width, // 10% padding
-                paddingTop: 0.1 * height, // 10% padding
-                paddingBottom: 0.1 * height, // 10% padding
             }}
-            onMouseDown={handleMouseDownDrag}
-        >
-            <AutoResizeTextarea
-                value={text}
-                onChange={(e) => onUpdate(id, { text: e.target.value })}
-                onMinHeightChange={(minH) => {
-                    if (minH > height) {
-                        onUpdate(id, { height: minH });
-                    }
-                }}
-                className="w-full resize-none text-center break-words whitespace-pre-wrap outline-none bg-transparent"
-            />
+                className="border relative flex justify-center items-center bg-black group">
+                <AutoResizeTextarea
+                    value={text}
+                    onChange={(e) => onUpdate(id, { text: e.target.value })}
+                    onMinHeightChange={(minH) => {
+                        if (minH > height) {
+                            onUpdate(id, { height: minH });
+                        }
+                    }}
+                    className="w-full resize-none text-center break-words whitespace-pre-wrap outline-none bg-transparent"
+                />
 
-            {/* Resize handles */}
-            <div
-                className="absolute size-1 rounded-full bg-white cursor-nwse-resize"
-                style={{ top: -2, left: -2 }}
-                onMouseDown={(e) => handleMouseDownResize(e, "top-left")}
-            />
-            <div
-                className="absolute size-1 rounded-full bg-white cursor-nesw-resize"
-                style={{ top: -2, right: -2 }}
-                onMouseDown={(e) => handleMouseDownResize(e, "top-right")}
-            />
-            <div
-                className="absolute size-1 rounded-full bg-white cursor-nesw-resize"
-                style={{ bottom: -2, left: -2 }}
-                onMouseDown={(e) => handleMouseDownResize(e, "bottom-left")}
-            />
-            <div
-                className="absolute size-1 rounded-full bg-white cursor-nwse-resize"
-                style={{ bottom: -2, right: -2 }}
-                onMouseDown={(e) => handleMouseDownResize(e, "bottom-right")}
-            />
+                {/* Resize handles */}
+                <div
+                    className="absolute size-1 rounded-full bg-white cursor-nwse-resize"
+                    style={{ top: -2, left: -2 }}
+                    onMouseDown={(e) => handleMouseDownResize(e, "top-left")}
+                />
+                <div
+                    className="absolute size-1 rounded-full bg-white cursor-nesw-resize"
+                    style={{ top: -2, right: -2 }}
+                    onMouseDown={(e) => handleMouseDownResize(e, "top-right")}
+                />
+                <div
+                    className="absolute size-1 rounded-full bg-white cursor-nesw-resize"
+                    style={{ bottom: -2, left: -2 }}
+                    onMouseDown={(e) => handleMouseDownResize(e, "bottom-left")}
+                />
+                <div
+                    className="absolute size-1 rounded-full bg-white cursor-nwse-resize"
+                    style={{ bottom: -2, right: -2 }}
+                    onMouseDown={(e) => handleMouseDownResize(e, "bottom-right")}
+                />
+            </div>
         </div>
     );
 }
@@ -272,7 +271,7 @@ function AutoResizeTextarea({
         if (ref.current && !isResizing) {
             ref.current.style.height = "auto";
             const newHeight = ref.current.scrollHeight;
-            ref.current.style.height = newHeight * 0.9 + "px"; // -8 for padding
+            ref.current.style.height = newHeight - 8 + "px"; // -8 for padding
             onMinHeightChange?.(newHeight);
         }
     }, [value, onMinHeightChange, isResizing]);
