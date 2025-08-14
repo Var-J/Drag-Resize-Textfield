@@ -211,13 +211,13 @@ function DraggableResizableItem({
                  left: x,
                  top: y,
              }}
-             className="group absolute hover:hover:shadow-[0_0_8px_5px_rgba(147,197,253,0.8)] hover:bg-blue-400 hover:shadow-blue-300 select-none cursor-move p-1">
+             className="group absolute hover:hover:shadow-[0_0_15px_5px] hover:bg-blue-300 hover:shadow-blue-300 select-none cursor-move p-1.5">
             <div
                 style={{
                 width,
                 height,
             }}
-                className="border relative flex justify-center items-center bg-black group">
+                className="border relative flex justify-center items-center bg-black">
                 <AutoResizeTextarea
                     value={text}
                     onChange={(e) => onUpdate(id, { text: e.target.value })}
