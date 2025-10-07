@@ -76,6 +76,8 @@ function DraggableResizableItem({
     const dragStart = useRef({ mouseX: 0, mouseY: 0, startX: 0, startY: 0 });
     const resizeStart = useRef({ mouseX: 0, mouseY: 0, startX: 0, startY: 0, startW: 0, startH: 0 });
 
+    const [isEditing, setIsEditing] = useState(false);
+
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (!containerRef.current) return;
@@ -211,7 +213,7 @@ function DraggableResizableItem({
                  left: x,
                  top: y,
              }}
-             className="group absolute hover:hover:shadow-[0_0_15px_5px] hover:bg-blue-300 hover:shadow-blue-300 select-none cursor-move p-1.5">
+             className={`${isEditing ? "bg-blue-300 shadow-blue-300 shadow-[0_0_15px_5px]" : ""} group absolute hover:shadow-[0_0_15px_5px] hover:bg-blue-300 hover:shadow-blue-300 select-none cursor-move p-1.5`}>
             <div
                 style={{
                 width,
@@ -220,6 +222,8 @@ function DraggableResizableItem({
                 className="border relative flex justify-center items-center bg-black">
                 <AutoResizeTextarea
                     value={text}
+                    onFocus={() => setIsEditing(true)}
+                    onBlur={() => setIsEditing(false)}
                     onChange={(e) => onUpdate(id, { text: e.target.value })}
                     onMinHeightChange={(minH) => {
                         if (minH > height) {
